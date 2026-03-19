@@ -88,4 +88,4 @@ def getcurrentrate():
 
 if __name__ == '__main__':
     print("tomatogod/octopusagileflask app starting...")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
