@@ -1,5 +1,5 @@
 # 1. Base image
-FROM python:latest
+FROM python:3.12-slim
 
 # 2. Environment metadata (required values, no defaults)
 ENV OCTOPUSAPIKEY=""
