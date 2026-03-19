@@ -57,6 +57,10 @@ def get_period_now():
 
 app = Flask(__name__)
 
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
 @app.route('/<NumberOfSlots>')
 def getlowestrates(NumberOfSlots):
     slots = int(NumberOfSlots)
