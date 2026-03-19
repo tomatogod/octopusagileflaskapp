@@ -4,9 +4,10 @@ FROM python:3.12-slim
 # 2. Environment metadata (required values, no defaults)
 ENV OCTOPUSAPIKEY=""
 ENV OCTOPUSAPIURL=""
+ENV PORT="5000"
 
 LABEL org.opencontainers.image.title="Octopus Agile Flask App"
-LABEL org.opencontainers.image.description="Fetches Octopus Agile electricity rates and exposes slot-based endpoints. Requires OCTOPUSAPIKEY and OCTOPUSAPIURL."
+LABEL org.opencontainers.image.description="Fetches Octopus Agile electricity rates and exposes slot-based endpoints. Requires OCTOPUSAPIKEY and OCTOPUSAPIURL. Optional PORT (default 5000)."
 
 # 3. Copy files
 COPY ./app/ /src

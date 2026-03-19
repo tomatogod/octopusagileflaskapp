@@ -5,6 +5,7 @@ A small Python/Flask app that fetches Octopus Agile electricity rates for the cu
 ## Features
 
 - Reads `OCTOPUSAPIKEY` and `OCTOPUSAPIURL` from environment variables
+- Optional `PORT` environment variable (defaults to 5000)
 - Builds and runs inside Docker
 - Fetches Octopus Agile rates from API
 - Provides sorted, accessible results through HTTP endpoints
@@ -33,6 +34,7 @@ For example:
 ```bash
 export OCTOPUSAPIKEY="abcd1234-abcd-1234-abcd-1234abcd1234"
 export OCTOPUSAPIURL="https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariff"
+export PORT=8080  # optional, defaults to 5000
 ```
 
 ## Quick Start (Public GHCR image)
