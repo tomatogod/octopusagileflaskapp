@@ -35,6 +35,30 @@ export OCTOPUSAPIKEY="abcd1234-abcd-1234-abcd-1234abcd1234"
 export OCTOPUSAPIURL="https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariff"
 ```
 
+## Quick Start (Public GHCR image)
+
+You can pull this image directly from GitHub Container Registry (public package):
+
+```bash
+docker pull ghcr.io/tomatogod/octopusagileflaskapp:latest
+```
+
+Then run with required settings:
+
+```bash
+docker run -p 5000:5000 \
+  -e OCTOPUSAPIKEY="abcd1234-abcd-1234-abcd-1234abcd1234" \
+  -e OCTOPUSAPIURL="https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariff" \
+  ghcr.io/tomatogod/octopusagileflaskapp:latest
+```
+
+Check it:
+
+```bash
+curl http://localhost:5000/currentelectric
+curl http://localhost:5000/23
+```
+
 ## API Endpoints
 
 - `/currentelectric`
