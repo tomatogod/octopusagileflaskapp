@@ -3,6 +3,8 @@ import requests
 import datetime
 import os
 import threading
+import signal
+import sys
 
 # Cache settings
 CACHE_TTL_SECONDS = int(os.getenv('OCTOPUSCACHE_TTL', '300'))  # default 5 minutes
@@ -130,7 +132,15 @@ def getcurrentrate():
 
     return str(round((value_inc_vat[0] / 100), 4))
 
+def _graceful_shutdown(signum, frame):
+    print(f"Received shutdown signal ({signum}); exiting gracefully...")
+    sys.exit(0)
+
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, _graceful_shutdown)
+    signal.signal(signal.SIGINT, _graceful_shutdown)
+
     print("tomatogod/octopusagileflask app starting...")
     port = int(os.getenv('PORT', '5000'))
     app.run(debug=False, host='0.0.0.0', port=port)
