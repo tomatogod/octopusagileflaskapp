@@ -68,7 +68,10 @@ curl http://localhost:5000/23
 ## API Endpoints
 
 - `/currentelectric`
-  - Returns the latest `value_inc_vat` rate from the current hour period.
+  - Returns current active rate based on the Octopus 30-minute slot timestamps.
+  - Uses full day data (`period_from`/`period_to`) and selects the slot where `now` lies between `valid_from` and `valid_to`.
+  - Falls back to the latest rate if no exact slot match is found (rare edge case around boundary logic).
+  - Caching: TTL via `OCTOPUSCACHE_TTL` plus lock-protected refresh to avoid duplicate API calls.
 
 - `/<slot>`
   - `slot` is an integer from `0` to `47` (30-minute slots across the day)

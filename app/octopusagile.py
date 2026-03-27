@@ -10,6 +10,9 @@ import sys
 CACHE_TTL_SECONDS = int(os.getenv('OCTOPUSCACHE_TTL', '300'))  # default 5 minutes
 api_cache = {}
 cache_lock = threading.Lock()
+fetch_lock = threading.Lock()
+stop_event = threading.Event()
+cache_refresher_thread = None
 
 # Config items
 apikey = os.getenv('OCTOPUSAPIKEY', '').strip()
@@ -85,6 +88,35 @@ def get_period_now_rounded_plus_ttl():
     return period
 
 
+def _parse_octopus_time(ts: str):
+    if not ts:
+        raise ValueError('Invalid timestamp')
+    if ts.endswith('Z'):
+        ts = ts[:-1] + '+00:00'
+    return datetime.datetime.fromisoformat(ts)
+
+
+def _get_current_rate_from_day(data):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    for item in data.get('results', []):
+        try:
+            valid_from = _parse_octopus_time(item.get('valid_from') or item.get('from'))
+            valid_to = _parse_octopus_time(item.get('valid_to') or item.get('to'))
+        except Exception:
+            continue
+        if valid_from <= now < valid_to:
+            print(f"currentelectric: found active slot {valid_from} - {valid_to} (now={now})")
+            return item.get('value_inc_vat')
+
+    if data.get('results'):
+        fallback = data['results'][-1].get('value_inc_vat')
+        print(f"currentelectric: no active slot; fallback to latest slot value at {now}")
+        return fallback
+
+    print(f"currentelectric: no data at all to determine current rate at {now}")
+    return None
+
+
 def _cache_get(key):
     with cache_lock:
         entry = api_cache.get(key)
@@ -111,22 +143,27 @@ def get_rates_from_api(period_from, period_to):
     if cached is not None:
         return cached
 
-    if not apiurl:
-        raise RuntimeError('Invalid OCTOPUSAPIURL (empty)')
+    with fetch_lock:
+        cached = _cache_get(key)
+        if cached is not None:
+            return cached
 
-    headers = {'Authorization': apikey}
-    res = requests.get(
-        apiurl,
-        headers=headers,
-        params={'period_from': period_from, 'period_to': period_to},
-        timeout=10,
-    )
-    res.raise_for_status()
-    data = res.json()
+        if not apiurl:
+            raise RuntimeError('Invalid OCTOPUSAPIURL (empty)')
 
-    print(f"Cache refresh: fetched {len(data.get('results', []))} rates for {period_from} to {period_to}")
-    _cache_set(key, data)
-    return data
+        headers = {'Authorization': apikey}
+        res = requests.get(
+            apiurl,
+            headers=headers,
+            params={'period_from': period_from, 'period_to': period_to},
+            timeout=10,
+        )
+        res.raise_for_status()
+        data = res.json()
+
+        print(f"Cache refresh: fetched {len(data.get('results', []))} rates for {period_from} to {period_to}")
+        _cache_set(key, data)
+        return data
 
 
 # flask endpoints
@@ -154,18 +191,39 @@ def getlowestrates(NumberOfSlots):
 
 @app.route('/currentelectric')
 def getcurrentrate():
-    getdatefrom = get_period_start_of_hour()
-    getdateto = get_period_now_rounded_plus_ttl()  # Use rounded + TTL for period_to
+    getdatefrom = get_period_from()
+    getdateto = get_period_to()
     data = get_rates_from_api(getdatefrom, getdateto)
 
-    value_inc_vat = [x['value_inc_vat'] for x in data.get('results', [])]
-    if not value_inc_vat:
+    current_value = _get_current_rate_from_day(data)
+    if current_value is None:
         return 'No data available', 500
 
-    return str(round((value_inc_vat[-1] / 100), 4))  # Use the latest rate
+    return str(round((current_value / 100), 4))  # Current active half-hour rate
+
+
+@app.before_first_request
+def start_cache_refresher():
+    global cache_refresher_thread
+    if cache_refresher_thread is None or not cache_refresher_thread.is_alive():
+        def _refresher():
+            while not stop_event.is_set():
+                try:
+                    get_rates_from_api(get_period_from(), get_period_to())
+                    get_rates_from_api(get_period_start_of_hour(), get_period_now_rounded_plus_ttl())
+                except Exception as ex:
+                    print(f"Cache refresher error: {ex}")
+                stop_event.wait(CACHE_TTL_SECONDS)
+
+        cache_refresher_thread = threading.Thread(target=_refresher, daemon=True)
+        cache_refresher_thread.start()
+
 
 def _graceful_shutdown(signum, frame):
     print(f"Received shutdown signal ({signum}); exiting gracefully...")
+    stop_event.set()
+    if cache_refresher_thread is not None and cache_refresher_thread.is_alive():
+        cache_refresher_thread.join(timeout=5)
     sys.exit(0)
 
 
