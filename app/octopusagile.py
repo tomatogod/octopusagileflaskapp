@@ -102,6 +102,7 @@ def get_rates_from_api(period_from, period_to):
     res.raise_for_status()
     data = res.json()
 
+    print(f"Cache refresh: fetched {len(data.get('results', []))} rates for {period_from} to {period_to}")
     _cache_set(key, data)
     return data
 
