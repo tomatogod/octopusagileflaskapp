@@ -202,7 +202,6 @@ def getcurrentrate():
     return str(round((current_value / 100), 4))  # Current active half-hour rate
 
 
-@app.before_first_request
 def start_cache_refresher():
     global cache_refresher_thread
     if cache_refresher_thread is None or not cache_refresher_thread.is_alive():
@@ -230,6 +229,8 @@ def _graceful_shutdown(signum, frame):
 if __name__ == '__main__':
     signal.signal(signal.SIGTERM, _graceful_shutdown)
     signal.signal(signal.SIGINT, _graceful_shutdown)
+
+    start_cache_refresher()
 
     print("tomatogod/octopusagileflask app starting...")
     port = int(os.getenv('PORT', '5000'))
