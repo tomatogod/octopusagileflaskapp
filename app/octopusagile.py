@@ -76,6 +76,14 @@ def get_period_now_rounded():
     period = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     return period
 
+def get_period_now_rounded_plus_ttl():
+    now = datetime.datetime.now(datetime.timezone.utc)
+    # Round down to nearest CACHE_TTL_SECONDS, then add CACHE_TTL_SECONDS
+    rounded_seconds = ((now.timestamp() // CACHE_TTL_SECONDS) * CACHE_TTL_SECONDS) + CACHE_TTL_SECONDS
+    rounded_time = datetime.datetime.fromtimestamp(rounded_seconds, tz=datetime.timezone.utc)
+    period = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return period
+
 
 def _cache_get(key):
     with cache_lock:
@@ -147,7 +155,7 @@ def getlowestrates(NumberOfSlots):
 @app.route('/currentelectric')
 def getcurrentrate():
     getdatefrom = get_period_start_of_hour()
-    getdateto = get_period_now_rounded()  # Use rounded time for caching
+    getdateto = get_period_now_rounded_plus_ttl()  # Use rounded + TTL for period_to
     data = get_rates_from_api(getdatefrom, getdateto)
 
     value_inc_vat = [x['value_inc_vat'] for x in data.get('results', [])]
