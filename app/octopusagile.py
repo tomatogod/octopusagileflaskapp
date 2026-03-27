@@ -12,16 +12,15 @@ api_cache = {}
 cache_lock = threading.Lock()
 
 # Config items
-try:
-    apikey = os.environ['OCTOPUSAPIKEY']
-except:
-    print('APIKEY Environment Variable Not Set')
-    exit
-try:    
-    apiurl = os.environ['OCTOPUSAPIURL']
-except:
-    print('APIURL Environment Variable Not Set')
-    exit
+apikey = os.getenv('OCTOPUSAPIKEY', '').strip()
+apiurl = os.getenv('OCTOPUSAPIURL', '').strip()
+
+if not apikey:
+    raise RuntimeError('OCTOPUSAPIKEY environment variable is required')
+if not apiurl:
+    raise RuntimeError('OCTOPUSAPIURL environment variable is required')
+if not apiurl.startswith(('http://', 'https://')):
+    raise RuntimeError('OCTOPUSAPIURL must start with http:// or https://')
 
 # time period definitions
 def get_period_from():
@@ -87,9 +86,16 @@ def get_rates_from_api(period_from, period_to):
     if cached is not None:
         return cached
 
-    getratesurl = f"{apiurl}?period_from={period_from}&period_to={period_to}"
+    if not apiurl:
+        raise RuntimeError('Invalid OCTOPUSAPIURL (empty)')
+
     headers = {'Authorization': apikey}
-    res = requests.get(getratesurl, headers=headers, timeout=10)
+    res = requests.get(
+        apiurl,
+        headers=headers,
+        params={'period_from': period_from, 'period_to': period_to},
+        timeout=10,
+    )
     res.raise_for_status()
     data = res.json()
 
