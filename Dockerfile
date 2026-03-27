@@ -5,9 +5,10 @@ FROM python:3.12-slim
 ENV OCTOPUSAPIKEY=""
 ENV OCTOPUSAPIURL=""
 ENV PORT="5000"
+ENV OCTOPUSCACHE_TTL="300"
 
 LABEL org.opencontainers.image.title="Octopus Agile Flask App"
-LABEL org.opencontainers.image.description="Fetches Octopus Agile electricity rates and exposes slot-based endpoints. Requires OCTOPUSAPIKEY and OCTOPUSAPIURL. Optional PORT (default 5000)."
+LABEL org.opencontainers.image.description="Fetches Octopus Agile electricity rates and exposes slot-based endpoints. Requires OCTOPUSAPIKEY and OCTOPUSAPIURL. Optional PORT (default 5000) and OCTOPUSCACHE_TTL (default 300)."
 
 # 3. Copy files
 COPY ./app/ /src
