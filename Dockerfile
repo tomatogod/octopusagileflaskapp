@@ -3,7 +3,7 @@ FROM python:3.12-slim
 
 # 2. Environment metadata (required values, no defaults)
 ENV OCTOPUSAPIKEY=""
-ENV OCTOPUSAPIURL=""
+ENV OCTOPUSAPIURL="https://api.octopus.energy/v1/products/AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-D/standard-unit-rates/"
 ENV PORT="5000"
 ENV OCTOPUSCACHE_TTL="300"
 

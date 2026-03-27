@@ -13,7 +13,10 @@ cache_lock = threading.Lock()
 
 # Config items
 apikey = os.getenv('OCTOPUSAPIKEY', '').strip()
-apiurl = os.getenv('OCTOPUSAPIURL', '').strip()
+apiurl = os.getenv(
+    'OCTOPUSAPIURL',
+    'https://api.octopus.energy/v1/products/AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-D/standard-unit-rates/'
+).strip()
 
 if not apikey:
     raise RuntimeError('OCTOPUSAPIKEY environment variable is required')

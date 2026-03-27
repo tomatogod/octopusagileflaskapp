@@ -28,7 +28,7 @@ Run with required environment variables:
 ```bash
 docker run -p 5000:5000 \
   -e OCTOPUSAPIKEY="abcd1234-abcd-1234-abcd-1234abcd1234" \
-  -e OCTOPUSAPIURL="https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariff" \
+  -e OCTOPUSAPIURL="https://api.octopus.energy/v1/products/AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-D/standard-unit-rates/" \
   -e OCTOPUSCACHE_TTL="300" \
   octopusagileflaskapp:latest
 ```
