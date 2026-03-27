@@ -6,6 +6,9 @@ A small Python/Flask app that fetches Octopus Agile electricity rates for the cu
 
 - Reads `OCTOPUSAPIKEY` and `OCTOPUSAPIURL` from environment variables
 - Optional `PORT` environment variable (defaults to 5000)
+- Optional `OCTOPUSCACHE_TTL` environment variable (defaults to 300 seconds)
+- In-memory response caching per `period_from|period_to` key to avoid excessive API calls
+- Graceful shutdown support for `SIGTERM`/`SIGINT` (for container stop/restart scenarios)
 - Builds and runs inside Docker
 - Fetches Octopus Agile rates from API
 - Provides sorted, accessible results through HTTP endpoints
@@ -26,6 +29,7 @@ Run with required environment variables:
 docker run -p 5000:5000 \
   -e OCTOPUSAPIKEY="abcd1234-abcd-1234-abcd-1234abcd1234" \
   -e OCTOPUSAPIURL="https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariff" \
+  -e OCTOPUSCACHE_TTL="300" \
   octopusagileflaskapp:latest
 ```
 
