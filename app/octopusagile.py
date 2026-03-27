@@ -62,13 +62,27 @@ def get_period_now():
     period = str(getdate + 'T' + gethour + 'Z')
     return period
 
+def get_period_end_of_hour():
+    getdate = str(datetime.datetime.now().strftime("%Y-%m-%d"))
+    gethour = str(datetime.datetime.now().strftime("%H"))
+    period = str(getdate + 'T' + gethour + ':59:59Z')
+    return period
+
+def get_period_now_rounded():
+    now = datetime.datetime.now(datetime.timezone.utc)  # Timezone-aware UTC
+    # Round down to nearest CACHE_TTL_SECONDS
+    rounded_seconds = (now.timestamp() // CACHE_TTL_SECONDS) * CACHE_TTL_SECONDS
+    rounded_time = datetime.datetime.fromtimestamp(rounded_seconds, tz=datetime.timezone.utc)
+    period = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return period
+
 
 def _cache_get(key):
     with cache_lock:
         entry = api_cache.get(key)
         if not entry:
             return None
-        age = (datetime.datetime.utcnow() - entry['fetched']).total_seconds()
+        age = (datetime.datetime.now(datetime.timezone.utc) - entry['fetched']).total_seconds()
         if age >= CACHE_TTL_SECONDS:
             api_cache.pop(key, None)
             return None
@@ -78,7 +92,7 @@ def _cache_get(key):
 def _cache_set(key, data):
     with cache_lock:
         api_cache[key] = {
-            'fetched': datetime.datetime.utcnow(),
+            'fetched': datetime.datetime.now(datetime.timezone.utc),
             'data': data,
         }
 
@@ -133,14 +147,14 @@ def getlowestrates(NumberOfSlots):
 @app.route('/currentelectric')
 def getcurrentrate():
     getdatefrom = get_period_start_of_hour()
-    getdateto = get_period_now()
+    getdateto = get_period_now_rounded()  # Use rounded time for caching
     data = get_rates_from_api(getdatefrom, getdateto)
 
     value_inc_vat = [x['value_inc_vat'] for x in data.get('results', [])]
     if not value_inc_vat:
         return 'No data available', 500
 
-    return str(round((value_inc_vat[0] / 100), 4))
+    return str(round((value_inc_vat[-1] / 100), 4))  # Use the latest rate
 
 def _graceful_shutdown(signum, frame):
     print(f"Received shutdown signal ({signum}); exiting gracefully...")
